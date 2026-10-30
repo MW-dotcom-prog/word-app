@@ -73,15 +73,18 @@ export function lookupWordDetails(word: string): Promise<WordDetails> {
     headers: { Accept: 'application/json' },
   })
     .then(async (response) => {
-      if (!response.ok) throw new Error('词组与例句服务暂时不可用');
+      if (!response.ok) throw new Error('词典服务暂时不可用');
       return normalize(await response.json());
     })
     .catch((error: unknown) => {
       cache.delete(key);
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('词组与例句加载超时');
+        throw new Error('词典服务加载超时');
       }
-      throw error instanceof Error ? error : new Error('词组与例句加载失败');
+      if (error instanceof TypeError) {
+        throw new Error('网络不可用，请检查连接后重试');
+      }
+      throw error instanceof Error ? error : new Error('词典数据加载失败');
     })
     .finally(() => window.clearTimeout(timer));
 

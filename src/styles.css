@@ -970,6 +970,62 @@ p {
   line-height: 1.55;
 }
 
+/* Examples inside the learning card (shown only after the answer is revealed). */
+.study-word-details {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.study-word-details .word-details-toggle {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.study-word-details .word-details-toggle:hover {
+  border-color: rgba(46, 107, 79, 0.32);
+  color: var(--primary);
+}
+
+.study-word-details .word-details-toggle[aria-expanded='true'] {
+  border-color: rgba(46, 107, 79, 0.24);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.study-word-details .word-details-title {
+  color: var(--primary);
+}
+
+.study-word-details .word-details-body {
+  margin-top: 8px;
+  max-height: min(38vh, 280px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.study-word-details .word-details-error {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.study-word-details .example-list li {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.study-word-details + .study-card-footer {
+  border-top: none;
+}
+
 .online-loading {
   display: flex;
   align-items: center;

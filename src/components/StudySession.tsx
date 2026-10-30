@@ -23,6 +23,7 @@ import { ConfirmDialog, EmptyState, ErrorState, LoadingState, ProgressBar } from
 import { FavoriteButton } from './FavoriteButton';
 import { Icon } from './Icon';
 import { PronunciationControls } from './PronunciationControls';
+import { WordDetailsSection } from './WordDetailsSection';
 
 type StudyMode = 'learn' | 'review';
 type StudyScope = 'all' | 'favorites';
@@ -462,6 +463,15 @@ export function StudySession({
               </span>
             )}
           </button>
+
+          {revealed ? (
+            <WordDetailsSection
+              key={current.w}
+              word={current.w}
+              showPhrases={false}
+              className="study-word-details"
+            />
+          ) : null}
 
           <div className="study-card-footer">
             <span className="muted small">
