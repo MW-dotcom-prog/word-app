@@ -44,6 +44,7 @@ describe('state persistence', () => {
       seen: 2,
       correct: 1,
       wrong: 0,
+      correctStreak: 1,
     };
     state.daily['2026-10-18'] = { newCount: 5, reviewCount: 3, correct: 7, wrong: 1 };
 
@@ -105,6 +106,8 @@ describe('state persistence', () => {
 
     const state = loadState(storage);
     expect(Object.keys(state.progress)).toEqual(['good']);
+    // Old saves have no correctStreak; default it instead of discarding progress.
+    expect(state.progress.good.correctStreak).toBe(0);
     expect(state.settings).toEqual({
       activeListId: 'toefl',
       dailyGoal: 15,

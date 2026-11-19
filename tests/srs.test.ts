@@ -24,6 +24,10 @@ describe('initial learning', () => {
     expect(initialProgress('fuzzy', TODAY).correct).toBe(0);
     expect(initialProgress('fuzzy', TODAY).wrong).toBe(0);
     expect(initialProgress('unknown', TODAY).wrong).toBe(1);
+
+    expect(initialProgress('know', TODAY).correctStreak).toBe(1);
+    expect(initialProgress('fuzzy', TODAY).correctStreak).toBe(0);
+    expect(initialProgress('unknown', TODAY).correctStreak).toBe(0);
   });
 });
 
@@ -81,5 +85,15 @@ describe('review scheduling', () => {
   it('increments the seen counter on every review', () => {
     const progress = { ...initialProgress('know', TODAY), seen: 4 };
     expect(applyReview(progress, 'remember', TODAY).seen).toBe(5);
+  });
+
+  it('tracks consecutive remembered ratings and resets on any other rating', () => {
+    const first = initialProgress('know', TODAY);
+    const second = applyReview(first, 'remember', TOMORROW);
+    expect(first.correctStreak).toBe(1);
+    expect(second.correctStreak).toBe(2);
+
+    expect(applyReview(second, 'fuzzy', TODAY).correctStreak).toBe(0);
+    expect(applyReview(second, 'forgot', TODAY).correctStreak).toBe(0);
   });
 });

@@ -47,6 +47,8 @@ export interface WordProgress {
   seen: number;
   correct: number;
   wrong: number;
+  /** Consecutive "know"/"remember" ratings; any other rating resets it to 0. */
+  correctStreak: number;
 }
 
 export interface DailyStat {

@@ -17,12 +17,14 @@ import {
   getTodayNewRemaining,
   shuffle,
 } from '../lib/selectors';
+import { AUTO_UNFAVORITE_STREAK } from '../lib/srs';
 import { useAsync } from '../lib/useAsync';
 import { useAppState } from '../state/AppState';
 import { ConfirmDialog, EmptyState, ErrorState, LoadingState, ProgressBar } from './Common';
 import { FavoriteButton } from './FavoriteButton';
 import { Icon } from './Icon';
 import { PronunciationControls } from './PronunciationControls';
+import { WordDetailsSection } from './WordDetailsSection';
 
 type StudyMode = 'learn' | 'review';
 type StudyScope = 'all' | 'favorites';
@@ -86,7 +88,14 @@ export function StudySession({
   const [exitOpen, setExitOpen] = useState(false);
   const [isExtraSession, setIsExtraSession] = useState(false);
   const [sessionVersion, setSessionVersion] = useState(0);
+  const [autoToast, setAutoToast] = useState<string | null>(null);
   const ratingLock = useRef(false);
+
+  useEffect(() => {
+    if (!autoToast) return;
+    const timer = window.setTimeout(() => setAutoToast(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [autoToast]);
 
   // Snapshot the queue once. State updates caused by rating must not mutate it.
   useEffect(() => {
@@ -169,6 +178,19 @@ export function StudySession({
     }, 260);
     const word = current.w.toLowerCase();
     const hasProgress = Boolean(state.progress[word]);
+    const priorStreak = state.progress[word]?.correctStreak ?? 0;
+    const wasFavorite = Boolean(state.favorites[word]);
+    const missed = option.rating === 'unknown' || option.rating === 'forgot';
+
+    if (
+      option.tone === 'good' &&
+      wasFavorite &&
+      priorStreak + 1 === AUTO_UNFAVORITE_STREAK
+    ) {
+      setAutoToast(`连续 ${AUTO_UNFAVORITE_STREAK} 次认识，已自动取消收藏`);
+    } else if (missed && !wasFavorite) {
+      setAutoToast(`标记为「${option.label}」，已自动加入收藏`);
+    }
 
     if (isFavoriteScope) {
       if (hasProgress) {
@@ -463,6 +485,15 @@ export function StudySession({
             )}
           </button>
 
+          {revealed ? (
+            <WordDetailsSection
+              key={current.w}
+              word={current.w}
+              autoOpen
+              className="study-word-details"
+            />
+          ) : null}
+
           <div className="study-card-footer">
             <span className="muted small">
               {revealed ? '根据回忆程度选择' : '先在心里回想，再查看释义'}
@@ -488,13 +519,19 @@ export function StudySession({
         <p className="session-tip">
           {isFavoriteScope
             ? currentHasProgress
-              ? '按艾宾浩斯曲线更新这个词的复习时间。'
-              : '已加入学习计划，明天开始复习。'
+              ? `按艾宾浩斯曲线更新这个词的复习时间；连续 ${AUTO_UNFAVORITE_STREAK} 次认识/记得后自动取消收藏。`
+              : `已加入学习计划，明天开始复习；连续 ${AUTO_UNFAVORITE_STREAK} 次认识/记得后自动取消收藏。`
             : mode === 'learn'
               ? '新词会按艾宾浩斯曲线进入复习。'
               : '艾宾浩斯复习：次日 → 2天 → 4天 → 7天 → 15天 → 30天 → 60天'}
         </p>
       </main>
+
+      {autoToast ? (
+        <div className="toast" role="status">
+          {autoToast}
+        </div>
+      ) : null}
 
       <ConfirmDialog
         open={exitOpen}

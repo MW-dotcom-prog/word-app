@@ -133,6 +133,150 @@ describe('favorites', () => {
   });
 });
 
+describe('automatic favorite', () => {
+  it('favorites newly learned words marked as unknown', () => {
+    const state = reducer(createDefaultState(), {
+      type: 'learn',
+      word: 'Abandon',
+      rating: 'unknown',
+      today: TODAY,
+    });
+    expect(state.favorites).toEqual({ abandon: TODAY });
+  });
+
+  it('favorites words marked as forgotten during review', () => {
+    let state = reducer(createDefaultState(), {
+      type: 'learn',
+      word: 'abandon',
+      rating: 'know',
+      today: TODAY,
+    });
+    expect(state.favorites).toEqual({});
+
+    state = reducer(state, {
+      type: 'review',
+      word: 'abandon',
+      rating: 'forgot',
+      today: TOMORROW,
+    });
+    expect(state.favorites).toEqual({ abandon: TOMORROW });
+  });
+
+  it('leaves fuzzy and positive ratings out of favorites', () => {
+    let state = reducer(createDefaultState(), {
+      type: 'learn',
+      word: 'a',
+      rating: 'fuzzy',
+      today: TODAY,
+    });
+    state = reducer(state, { type: 'learn', word: 'b', rating: 'know', today: TODAY });
+    state = reducer(state, { type: 'review', word: 'b', rating: 'remember', today: TOMORROW });
+
+    expect(state.favorites).toEqual({});
+  });
+
+  it('keeps an existing favorite and its original date', () => {
+    let state = reducer(createDefaultState(), {
+      type: 'toggleFavorite',
+      word: 'abandon',
+      today: '2026-10-01',
+    });
+    state = reducer(state, {
+      type: 'learn',
+      word: 'abandon',
+      rating: 'unknown',
+      today: TODAY,
+    });
+
+    expect(state.favorites).toEqual({ abandon: '2026-10-01' });
+  });
+});
+
+describe('automatic unfavorite', () => {
+  const REVIEW_DATES = [
+    '2026-10-19',
+    '2026-10-20',
+    '2026-10-21',
+    '2026-10-22',
+    '2026-10-23',
+    '2026-10-24',
+  ];
+
+  function favoriteAndLearn(): ReturnType<typeof createDefaultState> {
+    let state = reducer(createDefaultState(), {
+      type: 'toggleFavorite',
+      word: 'abandon',
+      today: TODAY,
+    });
+    state = reducer(state, { type: 'learn', word: 'abandon', rating: 'know', today: TODAY });
+    return state;
+  }
+
+  function review(
+    state: ReturnType<typeof createDefaultState>,
+    rating: 'remember' | 'fuzzy' | 'forgot',
+    dayIndex: number,
+  ): ReturnType<typeof createDefaultState> {
+    return reducer(state, {
+      type: 'review',
+      word: 'abandon',
+      rating,
+      today: REVIEW_DATES[dayIndex],
+    });
+  }
+
+  it('removes a favorite after five consecutive positive ratings', () => {
+    let state = favoriteAndLearn(); // streak 1
+    for (let index = 0; index < 3; index += 1) state = review(state, 'remember', index);
+
+    expect(state.progress.abandon.correctStreak).toBe(4);
+    expect(state.favorites.abandon).toBe(TODAY);
+
+    state = review(state, 'remember', 3);
+    expect(state.progress.abandon.correctStreak).toBe(5);
+    expect(state.favorites.abandon).toBeUndefined();
+  });
+
+  it('keeps the favorite when a fuzzy rating breaks the streak', () => {
+    let state = favoriteAndLearn(); // streak 1
+    state = review(state, 'remember', 0); // streak 2
+    state = review(state, 'fuzzy', 1); // reset to 0
+    for (let index = 2; index < 6; index += 1) state = review(state, 'remember', index);
+
+    expect(state.progress.abandon.correctStreak).toBe(4);
+    expect(state.favorites.abandon).toBe(TODAY);
+  });
+
+  it('does not touch words that are not favorited', () => {
+    let state = reducer(createDefaultState(), {
+      type: 'learn',
+      word: 'abandon',
+      rating: 'know',
+      today: TODAY,
+    });
+    for (let index = 0; index < 4; index += 1) state = review(state, 'remember', index);
+
+    expect(state.progress.abandon.correctStreak).toBe(5);
+    expect(state.favorites).toEqual({});
+  });
+
+  it('respects a manual re-favorite after the streak has crossed the threshold', () => {
+    let state = favoriteAndLearn();
+    for (let index = 0; index < 4; index += 1) state = review(state, 'remember', index);
+    expect(state.favorites.abandon).toBeUndefined();
+
+    state = reducer(state, {
+      type: 'toggleFavorite',
+      word: 'abandon',
+      today: REVIEW_DATES[4],
+    });
+    state = review(state, 'remember', 4);
+
+    expect(state.progress.abandon.correctStreak).toBe(6);
+    expect(state.favorites.abandon).toBe(REVIEW_DATES[4]);
+  });
+});
+
 describe('replaceState action', () => {
   it('replaces the entire state (used by cloud sync)', () => {
     const replacement = createDefaultState();

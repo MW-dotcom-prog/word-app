@@ -222,7 +222,7 @@ export default function ProfilePage() {
       <section className="panel about-panel">
         <div className="section-heading">
           <h2>关于</h2>
-          <span className="muted small">v1.3.0</span>
+          <span className="muted small">v1.5.0</span>
         </div>
         <p className="muted small">
           词库数据来自{' '}
