@@ -4,6 +4,7 @@ import { DictionaryEntryCard } from '../components/DictionaryEntryCard';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { loadDictionary, loadMeta } from '../lib/data';
 import { getFavoriteKeys } from '../lib/selectors';
+import { AUTO_UNFAVORITE_STREAK } from '../lib/srs';
 import { useAsync } from '../lib/useAsync';
 import { useAppState } from '../state/AppState';
 import type { DictEntry } from '../types';
@@ -46,7 +47,7 @@ export default function FavoritesPage() {
         <h1 className="page-title">收藏</h1>
         <p className="page-subtitle">
           {favoriteKeys.length > 0
-            ? `已收藏 ${favoriteKeys.length} 个单词，收藏不会改变复习计划。`
+            ? `已收藏 ${favoriteKeys.length} 个单词，收藏不会改变复习计划；标记「不认识/忘了」会自动加入收藏，连续 ${AUTO_UNFAVORITE_STREAK} 次「认识/记得」后自动取消收藏。`
             : '把想反复看的单词收藏起来，随时回来复习。'}
         </p>
       </header>

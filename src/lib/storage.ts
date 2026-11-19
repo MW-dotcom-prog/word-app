@@ -44,6 +44,8 @@ const isNonNegativeNumber = (value: unknown): value is number =>
 function parseProgress(value: unknown): WordProgress | null {
   if (!isRecord(value)) return null;
   const { stage, nextReview, firstLearned, lastReview, seen, correct, wrong } = value;
+  // Older saves/cloud payloads predate correctStreak; treat the missing field as 0.
+  const correctStreak = isNonNegativeNumber(value.correctStreak) ? value.correctStreak : 0;
   if (
     typeof stage !== 'number' ||
     !Number.isInteger(stage) ||
@@ -60,7 +62,16 @@ function parseProgress(value: unknown): WordProgress | null {
   ) {
     return null;
   }
-  return { stage, nextReview, firstLearned, lastReview, seen, correct, wrong };
+  return {
+    stage,
+    nextReview,
+    firstLearned,
+    lastReview,
+    seen,
+    correct,
+    wrong,
+    correctStreak,
+  };
 }
 
 function parseDaily(value: unknown): DailyStat | null {

@@ -9,6 +9,9 @@ import { addDays } from './date';
 export const INTERVALS = [1, 1, 2, 4, 7, 15, 30, 60] as const;
 export const MAX_STAGE = INTERVALS.length - 1;
 
+/** Favorited words are removed once they are rated known this many times in a row. */
+export const AUTO_UNFAVORITE_STREAK = 5;
+
 /**
  * First exposure to a word. Every new word is scheduled for tomorrow so that
  * the "next-day review" requirement is always satisfied.
@@ -22,6 +25,7 @@ export function initialProgress(rating: NewRating, today: string): WordProgress 
     seen: 1,
     correct: rating === 'know' ? 1 : 0,
     wrong: rating === 'unknown' ? 1 : 0,
+    correctStreak: rating === 'know' ? 1 : 0,
   };
 }
 
@@ -56,6 +60,7 @@ export function applyReview(
     seen: previous.seen + 1,
     correct: previous.correct + (rating === 'remember' ? 1 : 0),
     wrong: previous.wrong + (rating === 'forgot' ? 1 : 0),
+    correctStreak: rating === 'remember' ? (previous.correctStreak ?? 0) + 1 : 0,
   };
 }
 

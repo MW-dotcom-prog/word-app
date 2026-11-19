@@ -24,6 +24,7 @@ function progress(overrides: Partial<WordProgress> = {}): WordProgress {
     seen: 1,
     correct: 0,
     wrong: 0,
+    correctStreak: 0,
     ...overrides,
   };
 }
